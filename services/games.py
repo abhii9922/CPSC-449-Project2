@@ -152,10 +152,12 @@ async def create_game(data):
 
     db = await _get_db()
 
-    username = await db.fetch_one(
-        "SELECT * from users WHERE username = :username",
-        values={"username": game["username"]},
-    )
+    #username = await db.fetch_one(
+    #    "SELECT * from users WHERE username = :username",
+    #    values={"username": game["username"]},
+    #)
+    
+    username = request.authorization.username
 
     if username:
         # create new row in game
