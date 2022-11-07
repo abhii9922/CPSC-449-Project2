@@ -14,7 +14,7 @@ CREATE TABLE users (
 );
 
 CREATE TABLE games (
-    game_id INTEGER NOT NULL,
+    game_id TEXT NOT NULL,
     secret_word TEXT NOT NULL,
     username TEXT NOT NULL,
     PRIMARY KEY(game_id),
