@@ -156,7 +156,7 @@ async def create_game(data):
     #    "SELECT * from users WHERE username = :username",
     #    values={"username": game["username"]},
     #)
-    
+    app.logger.debug(request.authorization.username)
     username = request.authorization.username
 
     if username:
