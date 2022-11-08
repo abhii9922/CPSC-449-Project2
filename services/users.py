@@ -19,7 +19,7 @@ from typing import Tuple
 app = Quart(__name__)
 QuartSchema(app)
 
-app.config.from_file(".././etc/wordle.toml", toml.load)
+app.config.from_file(".././etc/wordle-users.toml", toml.load)
 
 @dataclasses.dataclass
 class Error:

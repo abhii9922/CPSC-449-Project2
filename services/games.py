@@ -19,7 +19,7 @@ from typing import Tuple
 app = Quart(__name__)
 QuartSchema(app)
 
-app.config.from_file(".././etc/wordle.toml", toml.load)
+app.config.from_file(".././etc/wordle-games.toml", toml.load)
 
 
 @dataclasses.dataclass
@@ -152,11 +152,8 @@ async def create_game(data):
 
     db = await _get_db()
 
-    #username = await db.fetch_one(
-    #    "SELECT * from users WHERE username = :username",
-    #    values={"username": game["username"]},
-    #)
     app.logger.debug(request.authorization.username)
+
     username = request.authorization.username
 
     if username:
