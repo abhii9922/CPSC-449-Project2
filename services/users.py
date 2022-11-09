@@ -168,6 +168,7 @@ async def signin():
         """,
         {"username": auth.username},
     )
+    app.logger.info(f"SELECT * FROM users WHERE username = {auth.username}")
 
     # if the username doesn't exist, return unauthorized
     if not user_row:
@@ -184,5 +185,3 @@ async def signin():
 
     # finally, return authenticated = true
     return {"authenticated": True}, 200
-
-

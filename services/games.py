@@ -3,6 +3,7 @@ import dataclasses
 import sqlite3
 import json
 import toml
+import logging
 import hashlib
 import secrets
 
@@ -18,6 +19,8 @@ from typing import Tuple
 
 app = Quart(__name__)
 QuartSchema(app)
+
+app.logger.setLevel(logging.INFO)
 
 app.config.from_file(".././etc/wordle-games.toml", toml.load)
 
@@ -219,6 +222,7 @@ async def get_game_state(game_id):
         """,
         values={"game_id": game_id},
     )
+    app.logger.info(f"SELECT game_states.game_id, game_history.guess, games.secret_word, game_states.status, game_history.remaining_guesses, game_states.remaining_guesses FROM game_states INNER JOIN game_history ON game_states.game_id = game_history.game_id INNER JOIN games ON game_states.game_id = games.game_id WHERE game_states.game_id = {game_id}")
 
     if game_states:
         response = []
@@ -265,6 +269,7 @@ async def check_guess(data, game_id):
         "SELECT game_states.status FROM game_states WHERE game_states.game_id = :game_id",
         values={"game_id": game_id},
     )
+    app.logger.info(f"SELECT game_states.status FROM game_states WHERE game_states.game_id = {game_id}")
 
     # if finished, then return number of guesses and game status
     if status != "In Progress":
@@ -272,6 +277,7 @@ async def check_guess(data, game_id):
         "SELECT game_states.remaining_guesses FROM game_states WHERE game_states.game_id = :game_id",
         values={"game_id": game_id},
         )
+        app.logger.info(f"SELECT game_states.remaining_guesses FROM game_states WHERE game_states.game_id = {game_id}")
         return {"remaining_guesses" : guesses, "status": status}
 
     # perform lookup in db table "valid_words" to check if guess is valid
@@ -279,6 +285,7 @@ async def check_guess(data, game_id):
         "SELECT EXISTS(SELECT 1 FROM valid_words WHERE word = :word)",
         values={"word": guess},
     )
+    app.logger.info(f"SELECT EXISTS(SELECT 1 FROM valid_words WHERE word = {guess})")
 
     # 0 if not in table, 1 if in table
     if valid_word == 0:
@@ -293,6 +300,7 @@ async def check_guess(data, game_id):
         """,
         {"game_id": game_id},
     )
+    app.logger.info(f"SELECT secret_word, remaining_guesses FROM games INNER JOIN game_states ON games.game_id = game_states.game_id WHERE games.game_id = {game_id}")
 
     if not info:
         abort(404, "Game with that id does not exist.")
@@ -363,6 +371,9 @@ async def get_progress_game(username):
         """,
         values={"username": username},
     )
+    app.logger.info(f"SELECT games.game_id, username, remaining_guesses FROM games LEFT JOIN game_states ON games.game_id = game_states.game_id WHERE username = {username} AND game_states.status = 'In Progress'")
+
+
     print("Progress of game1:", progress_game)
     if progress_game:
         print("Progress of game:", progress_game)
