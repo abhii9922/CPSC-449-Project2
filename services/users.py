@@ -2,6 +2,7 @@ import databases
 import dataclasses
 import sqlite3
 import json
+import logging
 import toml
 import hashlib
 import secrets
@@ -18,6 +19,8 @@ from typing import Tuple
 
 app = Quart(__name__)
 QuartSchema(app)
+
+app.logger.setLevel(logging.INFO)
 
 app.config.from_file(".././etc/wordle-users.toml", toml.load)
 
