@@ -151,14 +151,16 @@ async def signin():
     """
 
     auth = request.authorization
+    
+    
 
     # return bad request if invalid auth header
     if not auth:
-        abort(400, "Authorization header is required.")
+        abort(401, "Authorization header is required.")
 
     # check both username and password are present
     if not auth.username or not auth.password:
-        abort(400, "Username and password are required.")
+        abort(401, "Username and password are required.")
 
     db = await _get_db()
 
