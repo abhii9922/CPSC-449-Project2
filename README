@@ -1,0 +1,33 @@
+TEAM MEMBERS:
+Eddie Poulson Valdez
+Ayush Bhardwaj
+Abhishek Nagesh Shinde
+
+HOW TO INITIALIZE DATABASES:
+To initialize the database all you have to do is execute
+./bin/init.sh in your terminal when in the main directory
+for this project.
+
+HOW TO CONFIGURE NGINX:
+To configure nginx you just have to place the included 
+nginx configuration file in /etc/nginx/sites-enabled
+and start the nginx service by executing sudo service
+nginx start
+
+HOW TO START SERVICES:
+To start the Games and Users microservices you will 
+need to run foreman start -m "users=1, games=3" in your 
+terminal while in the main directory of this project and
+it should start up 1 instance of the users service and 3 
+instances of the games service.
+
+How to use endpoints
+HTTP verbs | endpoints | Action
+
+To register a new user: http POST tuffix-vm/auth/register username={user} password={pass}
+To create a game: http -a {user}:{pass} POST tuffix-vm/games/create
+To make a guess: http -a {user}:{pass} POST tuffix-vm/games/{gameid} guess={guess}
+To list in-progress games : http -a {user}:{pass} GET tuffix-vm/users/{username}
+To retrieve game state : http -a {user}:{pass} GET tuffix-vm/games/{gameid}
+
+Furthermore, you can view these endpoints in Quart Schema Documentation form when the server is running by navigating to tuffix-vm/games/docs or tuffix/users/docs in a web browser!

@@ -18,7 +18,7 @@ from random import randint
 from typing import Tuple
 
 app = Quart(__name__)
-QuartSchema(app)
+QuartSchema(app, openapi_path="/auth/openapi.json", redoc_ui_path="/auth/redoc", swagger_ui_path="/auth/docs")
 
 app.logger.setLevel(logging.INFO)
 

@@ -4,6 +4,7 @@ import sqlite3
 import json
 import toml
 import logging
+import uuid
 import hashlib
 import secrets
 
@@ -18,8 +19,7 @@ from random import randint
 from typing import Tuple
 
 app = Quart(__name__)
-QuartSchema(app)
-
+QuartSchema(app, openapi_path="/games/openapi.json", redoc_ui_path="/games/redoc", swagger_ui_path="/games/docs")
 app.logger.setLevel(logging.INFO)
 
 app.config.from_file(".././etc/wordle-games.toml", toml.load)
@@ -43,7 +43,7 @@ class CreateGame:
 
 @dataclasses.dataclass
 class CreatedGame:
-    game_id: int
+    game_id: str
     remaining_guesses: int = 6
     status: str = "In Progress"
 
@@ -145,60 +145,50 @@ async def username_exists(e):
 # -------------------------------- create game ------------------------------- #
 @app.route("/games/create", methods=["POST"])
 @tag(["games"])
-@validate_request(CreateGame)
-@validate_response(CreatedGame, 201)
-@validate_response(Error, 400)
-async def create_game(data):
+async def create_game():
     """Create a new game for a user with a random word."""
-    game = dataclasses.asdict(data)
+    game = {}
     game["secret_word"] = await _get_random_word()
 
     db = await _get_db()
 
-    app.logger.debug(request.authorization.username)
+    game["game_id"] = uuid.uuid4().hex
+    game["username"] = request.authorization.username
 
-    username = request.authorization.username
+    try:
+        id = await db.execute(
+            """
+            INSERT INTO games(game_id, secret_word, username)
+            VALUES(:game_id, :secret_word, :username)
+            """,
+            game,
+        )
+    except sqlite3.IntegrityError as e:
+        abort(409, e)
 
-    if username:
-        # create new row in game
-        try:
-            id = await db.execute(
-                """
-                INSERT INTO games(secret_word, username)
-                VALUES(:secret_word, :username)
-                """,
-                game,
-            )
-        except sqlite3.IntegrityError as e:
-            abort(409, e)
 
-        game["game_id"] = id
+    game_state = {
+        "game_id": game["game_id"],
+        "remaining_guesses": 6,
+        "status": "In Progress",
+    }
 
-        game_state = {
-            "game_id": game["game_id"],
-            "remaining_guesses": 6,
-            "status": "In Progress",
-        }
-        # create new row in game_states
-        try:
-            id = await db.execute(
-                """
-                INSERT INTO game_states(game_id, remaining_guesses, status)
-                VALUES(:game_id, :remaining_guesses, :status)
-                """,
-                game_state,
-            )
-        except sqlite3.IntegrityError as e:
-            abort(409, e)
+    try:
+        id = await db.execute(
+            """
+            INSERT INTO game_states(game_id, remaining_guesses, status)
+            VALUES(:game_id, :remaining_guesses, :status)
+            """,
+            game_state,
+        )
+    except sqlite3.IntegrityError as e:
+        abort(409, e)
 
-        return game_state, 201, {"Location": f"/games/{game['game_id']}"}
-
-    else:
-        abort(404, "Username does not exist.")
+    return game_state, 201, {"Location": f"/games/{game['game_id']}"}
 
 
 # ---------------------------- retrieve game state --------------------------- #
-@app.route("/games/<int:game_id>", methods=["GET"])
+@app.route("/games/<string:game_id>", methods=["GET"])
 @tag(["games"])
 @validate_response(Error, 404)
 async def get_game_state(game_id):
@@ -249,7 +239,7 @@ async def get_game_state(game_id):
 
 
 # --------------------- make a guess / update game state --------------------- #
-@app.route("/games/<int:game_id>", methods=["POST"])
+@app.route("/games/<string:game_id>", methods=["POST"])
 @tag(["games"])
 @validate_request(Guess)
 @validate_response(Error, 400)
@@ -360,6 +350,7 @@ async def check_guess(data, game_id):
 
 # -----------------------------------Listing in progress games------------------------#
 @app.route("/users/<string:username>", methods=["GET"])
+@tag(["users"])
 async def get_progress_game(username):
     """Retrieve the list of games in progress for a user with a given username."""
     db = await _get_db()
@@ -372,7 +363,7 @@ async def get_progress_game(username):
         values={"username": username},
     )
     app.logger.info(f"SELECT games.game_id, username, remaining_guesses FROM games LEFT JOIN game_states ON games.game_id = game_states.game_id WHERE username = {username} AND game_states.status = 'In Progress'")
-
+    
 
     print("Progress of game1:", progress_game)
     if progress_game:

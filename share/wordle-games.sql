@@ -15,14 +15,14 @@ CREATE TABLE games (
 );
 
 CREATE TABLE game_states (
-    game_id INTEGER NOT NULL,
+    game_id TEXT NOT NULL,
     remaining_guesses TINYINT NOT NULL,
     status TEXT NOT NULL,
     FOREIGN KEY (game_id) REFERENCES games(game_id)
 );
 
 CREATE TABLE game_history (
-    game_id INTEGER NOT NULL,
+    game_id TEXT NOT NULL,
     guess TEXT NOT NULL,
     remaining_guesses TINYINT NOT NULL,
     FOREIGN KEY (game_id) REFERENCES games(game_id)
